@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>COVID on A Hugo website</title>
+    <link>/tags/covid/</link>
+    <description>Recent content in COVID on A Hugo website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 08 May 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/covid/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Finding COVID Hot Spots with Spatial Autocorrelation Tests</title>
+      <link>/2020/05/08/covid-spatial/</link>
+      <pubDate>Fri, 08 May 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/05/08/covid-spatial/</guid>
+      <description>COVID-19 data analyses are all the rage at the moment, with COVID datasets being made publicly available at the city, state, and national level. It’s an awesome example of how open data can lead to a better understanding of the world around us. And, the best part is, much of the actual analysis is being done for free! I decided to take a stab it and contribute to the public COVID discorse with my own analysis below.</description>
+    </item>
+    
+  </channel>
+</rss>

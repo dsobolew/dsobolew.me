@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>A Hugo website</title>
+    <link>/</link>
+    <description>Recent content on A Hugo website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 31 Oct 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Pokénalysis of Pokémon Go Movesets</title>
+      <link>/2020/10/31/pokenalysis/</link>
+      <pubDate>Sat, 31 Oct 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/10/31/pokenalysis/</guid>
+      <description>Pokemon Go Moveset DataI started playing Pokémon Go this year and became particularly interested in Go Battle League where you battle other players in the game. Each player chooses three Pokémon to battle, each with a limit of one fast move and two charged moves. A fast move deals damage to the opposing player’s Pokémon while also building energy towards a charged move.</description>
+    </item>
+    
+    <item>
+      <title>Finding COVID Hot Spots with Spatial Autocorrelation Tests</title>
+      <link>/2020/05/08/covid-spatial/</link>
+      <pubDate>Fri, 08 May 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/05/08/covid-spatial/</guid>
+      <description>COVID-19 data analyses are all the rage at the moment, with COVID datasets being made publicly available at the city, state, and national level. It’s an awesome example of how open data can lead to a better understanding of the world around us. And, the best part is, much of the actual analysis is being done for free! I decided to take a stab it and contribute to the public COVID discorse with my own analysis below.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>/about/</link>
+      <pubDate>Thu, 05 May 2016 21:48:51 -0700</pubDate>
+      
+      <guid>/about/</guid>
+      <description>Hi, my name is Dennis Sobolewski and I am a data scientist. I created this site to share my work and hopefully learn along the way. Stay tuned for a more in depth &amp;ldquo;About me&amp;rdquo; section in the future, but for now I am just trying to get some posts up. In the meantime, please enjoy a curated gif from my personal collection.</description>
+    </item>
+    
+  </channel>
+</rss>

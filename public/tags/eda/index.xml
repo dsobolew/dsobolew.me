@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>EDA on A Hugo website</title>
+    <link>/tags/eda/</link>
+    <description>Recent content in EDA on A Hugo website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 31 Oct 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/eda/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Pokénalysis of Pokémon Go Movesets</title>
+      <link>/2020/10/31/pokenalysis/</link>
+      <pubDate>Sat, 31 Oct 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/10/31/pokenalysis/</guid>
+      <description>Pokemon Go Moveset DataI started playing Pokémon Go this year and became particularly interested in Go Battle League where you battle other players in the game. Each player chooses three Pokémon to battle, each with a limit of one fast move and two charged moves. A fast move deals damage to the opposing player’s Pokémon while also building energy towards a charged move.</description>
+    </item>
+    
+  </channel>
+</rss>
