@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tidyverts on A Data Blog</title>
+    <link>/tags/tidyverts/</link>
+    <description>Recent content in Tidyverts on A Data Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 31 Jan 2021 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/tidyverts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Tidy Tuesday: French Train Schedule Analysis with Tidyverts</title>
+      <link>/2021/01/31/tidy-tuesday-french-train-schedule-analysis-with-tidyverts/</link>
+      <pubDate>Sun, 31 Jan 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/01/31/tidy-tuesday-french-train-schedule-analysis-with-tidyverts/</guid>
+      <description>Tidy TuesdayThis is my very first Tidy Tuesday post where I analyze a data set that I have never seen before. The astute may notice this blog date is very much not NOT a Tuesday. Instead, the name comes from the weekly Tidy Tuesday data sets procured by the R For Data Science online community.
+French Train SchedulesI chose a data set from the past containing French train line schedules, along with accompanied statistics aggregated at the monthly level.</description>
+    </item>
+    
+  </channel>
+</rss>

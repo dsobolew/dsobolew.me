@@ -1,0 +1,294 @@
+---
+title: 'Tidy Tuesday: French Train Schedule Analysis with Tidyverts'
+author: ''
+date: '2021-01-31'
+slug: tidy-tuesday-french-train-schedule-analysis-with-tidyverts
+categories: []
+tags:
+  - Tidy Tuesday
+  - Tidyverts
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<div id="tidy-tuesday" class="section level2">
+<h2>Tidy Tuesday</h2>
+<p>This is my very first Tidy Tuesday post where I analyze a data set that I have never seen before. The astute may notice this blog date is very much not NOT a Tuesday. Instead, the name comes from the weekly <a href="https://github.com/rfordatascience/tidytuesday">Tidy Tuesday</a> data sets procured by the R For Data Science online community.</p>
+</div>
+<div id="french-train-schedules" class="section level2">
+<h2>French Train Schedules</h2>
+<p>I chose a data set from the past containing <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-02-26">French train line</a> schedules, along with accompanied statistics aggregated at the monthly level. Data can easily be downloaded using the tidytuesdayR package. This data set has a particular field missing for more recent years and requires some data cleaning steps.</p>
+<pre class="r"><code>tt &lt;- tidytuesdayR::tt_load(&#39;2019-02-26&#39;)</code></pre>
+<pre><code>## 
+##  Downloading file 1 of 3: `full_trains.csv`
+##  Downloading file 2 of 3: `regularite-mensuelle-tgv-aqst.csv`
+##  Downloading file 3 of 3: `small_trains.csv`</code></pre>
+<pre class="r"><code>trains &lt;- tt$full_trains %&gt;%
+  mutate(date = lubridate::ymd(paste0(as.character(year),if_else(nchar(month) == 1, paste0(&quot;0&quot;,month),as.character(month)),&quot;01&quot;)),
+         yearmonth = tsibble::yearmonth(date),
+         departure_station = str_to_title(departure_station),
+         arrival_station =str_to_title(arrival_station),
+         train_leg = paste0(departure_station,&quot;-&quot;,arrival_station))
+
+# create a key to join to dataset to pull in correct service
+trains_key &lt;- trains %&gt;%
+  filter(!is.na(service)) %&gt;%
+  select(train_leg, service) %&gt;%
+  rename(service_update = service) %&gt;%
+  distinct()
+
+
+# Fill in lines that don&#39;t have an existing service manually
+trains &lt;- trains %&gt;%
+  left_join(trains_key) %&gt;%
+  mutate(service = case_when(
+    !is.na(service_update) ~ service_update,
+    str_detect(train_leg,&quot;Madrid&quot;) ~ &quot;International&quot;,
+    str_detect(train_leg, &quot;Barcelona&quot;) ~ &quot;International&quot;,
+    str_detect(train_leg, &quot;Francfort&quot;) ~ &quot;International&quot;,
+    str_detect(train_leg, &quot;Stuttgart&quot;) ~ &quot;International&quot;,
+    str_detect(train_leg, &quot;Zurich&quot;) ~ &quot;International&quot;,
+    str_detect(train_leg, &quot;Geneve&quot;) ~ &quot;Internationl&quot;,
+    T ~ &quot;National&quot;)) %&gt;%
+  select(-service_update)</code></pre>
+</div>
+<div id="tidyverts" class="section level2">
+<h2>Tidyverts</h2>
+<p>This data set contains monthly statistics for each service, departure station, and arrival station combination. I am going to use the <a href="https://tidyverts.org/">Tidyverts</a> packages to create a tisbble time series object and take a closer look at the total number of trips for each train route.</p>
+<div id="creating-a-tsibble" class="section level3">
+<h3>Creating a Tsibble</h3>
+<p>Creating a tsibble object requires a key and index variable to be set. The key field contains a unique variable combination for each observation and the index field represents the time component of the series. Earlier I used the tsibble::yearmonth() function to specify that this is a monthly time series. Once in tsibble format, it’s easy to visualize, extract features, or forecast a time series data set with Tidyverts packages.</p>
+<pre class="r"><code># tidyverts  --------------------------------------------------------------
+
+library(tsibble)
+library(fabletools)
+library(feasts)
+
+trains_ts &lt;- trains %&gt;%
+  tsibble::tsibble(key = c(service, departure_station, arrival_station), index = yearmonth)
+
+## Viz of all time series 
+trains_ts %&gt;%
+autoplot(total_num_trips) +
+  guides(col = FALSE) +
+  labs(y = &quot;Trips&quot;, x = NULL, title = &quot;Monthly Total Trips by Train Leg&quot;,
+       subtitle = &quot;Each line represents a unqieu departure and arrival station combination&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+<div id="time-series-feature-extraction" class="section level3">
+<h3>Time Series Feature Extraction</h3>
+<p>The above graph shows us the time frame of our time series data set and the variation in trip volume among different train routes. Let’s extract some features from these time series in order to better understand differences among them. The fabletools::features() function does just this, transforming the tsibble object into a tibble with one row for each key. I used a set of features pre-defined by the feasts package, but a custom list can be created as well.</p>
+<p><em>note: some features were not appropriate for this data set and had zero variance or NA results. I added an additional processing step to remove these</em></p>
+<pre class="r"><code>## Feature Extraction
+
+train_features &lt;- trains_ts %&gt;%
+  fabletools::features(total_num_trips, fabletools::feature_set(pkgs = &quot;feasts&quot;)) 
+
+## Identify columns with NA values and 0 variance
+non_zero_var &lt;- train_features %&gt;%
+  summarise(across(everything(), ~var(.x, na.rm = T))) %&gt;%
+  pivot_longer(cols = everything(), names_to = &quot;column&quot;, values_to = &quot;value&quot;) %&gt;% 
+  filter(value != 0 &amp; !is.na(value)) %&gt;%
+  pull(column)
+
+## Remove columns with NA values 0 variance
+train_features &lt;- train_features %&gt;%
+  select(service, departure_station, arrival_station, all_of(non_zero_var)) %&gt;%
+  mutate(across(everything(), ~replace_na(.x, 0)))
+
+head(train_features)</code></pre>
+<pre><code>## # A tibble: 6 x 42
+##   service departure_stati~ arrival_station trend_strength spikiness linearity
+##   &lt;chr&gt;   &lt;chr&gt;            &lt;chr&gt;                    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+## 1 Intern~ Barcelona        Paris Lyon               0.572   1686.       41.0 
+## 2 Intern~ Francfort        Paris Est                0.663    438.      159.  
+## 3 Intern~ Geneve           Paris Lyon               0.205   2137.      -41.3 
+## 4 Intern~ Italie           Paris Lyon               0.307     50.7      -3.55
+## 5 Intern~ Lausanne         Paris Lyon               0.570    147.       81.1 
+## 6 Intern~ Madrid           Marseille St C~          0.611      1.46      9.32
+## # ... with 36 more variables: curvature &lt;dbl&gt;, stl_e_acf1 &lt;dbl&gt;,
+## #   stl_e_acf10 &lt;dbl&gt;, seasonal_strength_year &lt;dbl&gt;, seasonal_peak_year &lt;dbl&gt;,
+## #   seasonal_trough_year &lt;dbl&gt;, acf1 &lt;dbl&gt;, acf10 &lt;dbl&gt;, diff1_acf1 &lt;dbl&gt;,
+## #   diff1_acf10 &lt;dbl&gt;, diff2_acf1 &lt;dbl&gt;, diff2_acf10 &lt;dbl&gt;, season_acf1 &lt;dbl&gt;,
+## #   pacf5 &lt;dbl&gt;, diff1_pacf5 &lt;dbl&gt;, diff2_pacf5 &lt;dbl&gt;, season_pacf &lt;dbl&gt;,
+## #   nonzero_squared_cv &lt;dbl&gt;, lambda_guerrero &lt;dbl&gt;, nsdiffs &lt;dbl&gt;,
+## #   bp_stat &lt;dbl&gt;, bp_pvalue &lt;dbl&gt;, lb_stat &lt;dbl&gt;, lb_pvalue &lt;dbl&gt;,
+## #   var_tiled_var &lt;dbl&gt;, var_tiled_mean &lt;dbl&gt;, shift_level_max &lt;dbl&gt;,
+## #   shift_level_index &lt;dbl&gt;, shift_var_max &lt;dbl&gt;, shift_var_index &lt;dbl&gt;,
+## #   shift_kl_max &lt;dbl&gt;, shift_kl_index &lt;dbl&gt;, spectral_entropy &lt;dbl&gt;,
+## #   n_crossing_points &lt;dbl&gt;, longest_flat_spot &lt;dbl&gt;, stat_arch_lm &lt;dbl&gt;</code></pre>
+<p>Now that we reduced the time series to a tidy data frame of features, we can work with our original data in a more traditional way. Let’s see which routes have a greatest overall trend strength (increase over the entire time period) and yearly seasonality.</p>
+<pre class="r"><code>train_features %&gt;%
+  mutate(train_leg = paste0(departure_station,&quot; to &quot;, arrival_station)) %&gt;%
+  ggplot(aes(x = seasonal_strength_year, y = trend_strength)) +
+  geom_point() +
+  ggrepel::geom_text_repel(aes(label = if_else(seasonal_strength_year &gt;= .87 | trend_strength &gt;= .8, train_leg, NULL))) +
+  labs(x = &quot;Yearly Seasonal Strength&quot;, y = &quot;Overall Trend Strength&quot;,
+       title = &quot;Trend vs Seasonality for All Train Legs&quot;,
+       subtitle = &quot;Higher values labelled for context&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>
+<div id="most-positive-trend" class="section level3">
+<h3>Most Positive Trend</h3>
+<p>Extracting features from the time series lets us easily answer certain questions compared to sifting through hundreds of time series graphs. The below graphs use simple filtering to answer questions I had about the data set.</p>
+<pre class="r"><code>## Most positive trend
+
+trains_ts %&gt;%
+  inner_join(train_features %&gt;% filter(trend_strength == max(trend_strength)), by = c(&quot;service&quot;,&quot;departure_station&quot;,&quot;arrival_station&quot;)) %&gt;%
+  ggplot(aes(x = yearmonth, y = total_num_trips)) + 
+  geom_line() +
+    labs(title = &quot;Which Route Frequency has the Greatest Overall Trend Strength?&quot;, y = &quot;Trips&quot;, x = NULL) +
+  facet_wrap(vars(service, paste0(&quot;Departure: &quot;,departure_station), paste0(&quot;Arrival: &quot;,arrival_station)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>## Most Seasonal Trend
+
+trains_ts %&gt;%
+  inner_join(train_features %&gt;% filter(seasonal_strength_year == max(seasonal_strength_year, na.rm = T)), by = c(&quot;service&quot;,&quot;departure_station&quot;,&quot;arrival_station&quot;)) %&gt;%
+  ggplot(aes(x = yearmonth, y = total_num_trips)) + geom_line() +
+  labs(title = &quot;Which Route has the Most Seasonal Schedule?&quot;, y = &quot;Trips&quot;, x = NULL) +
+  facet_wrap(vars(service, paste0(&quot;Departure: &quot;,departure_station), paste0(&quot;Arrival: &quot;,arrival_station)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>## Highest spikiness 
+
+trains_ts %&gt;%
+  inner_join(train_features %&gt;% filter(spikiness == max(spikiness, na.rm = T)), by = c(&quot;service&quot;,&quot;departure_station&quot;,&quot;arrival_station&quot;)) %&gt;%
+  ggplot(aes(x = yearmonth, y = total_num_trips)) + geom_line() +
+  labs(title = &quot;Which Route has the Most Drastic Changes in Volumes?&quot;, y = &quot;Trips&quot;, x = NULL) +
+  facet_wrap(vars(service, paste0(&quot;Departure: &quot;,departure_station), paste0(&quot;Arrival: &quot;,arrival_station)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="pca-analysis" class="section level3">
+<h3>PCA Analysis</h3>
+<p>Feature extraction lets us expand our exploratory analysis toolkit for time series data. I decided to perform principal component analysis on the train features to better understand the main sources of variation among monthly train volumes.</p>
+<pre class="r"><code># Principal Component Analysis on Time Series Features --------------------
+
+
+features_pcs &lt;- train_features %&gt;%
+  select(-service, -departure_station, -arrival_station) %&gt;%
+  prcomp(scale = TRUE)
+
+
+features_pcs$rotation %&gt;% 
+  as.data.frame() %&gt;%
+  rownames_to_column() %&gt;% 
+  pivot_longer(cols = -rowname, names_to = &quot;PC&quot;) %&gt;%
+  group_by(PC) %&gt;%
+  #top_n(30, abs(value)) %&gt;%
+  filter(PC %in% c(&quot;PC1&quot;,&quot;PC2&quot;,&quot;PC3&quot;)) %&gt;%
+  mutate(rowname_ro = tidytext::reorder_within(rowname, value, PC)) %&gt;%
+  ggplot(aes(x = value, y = rowname_ro, fill = rowname)) +
+  geom_col() +
+  tidytext::scale_y_reordered() +
+  facet_wrap(~PC, scales = &quot;free_y&quot;) +
+  guides(fill = FALSE) +
+  labs(title = &quot;What Features Account for the Top 3 Principal Components?&quot;,
+        y = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+<div id="clustering-analysis" class="section level3">
+<h3>Clustering Analysis</h3>
+<p>Let’s do the same thing with k-means clustering to group our different train routes and see what characterizes each group. Below I perform a traditional k-means clustering analysis, look at the main differences between each cluster, and join the cluster number back to the train features and our original data set.</p>
+<pre class="r"><code># K means clustering ------------------------------------------------------
+
+set.seed(456)
+
+## Scale train features
+train_features_scaled &lt;- train_features %&gt;%
+  mutate(across(where(is.numeric), ~scale(.x)))
+
+## Cluster and store results for K 1 through 9
+train_cluster &lt;- tibble(k = 1:9) %&gt;%
+  mutate(
+    kclust = map(k, ~kmeans(train_features_scaled %&gt;% select(where(is.numeric)), .x)),
+    tidied = map(kclust, tidy),
+    glanced = map(kclust, glance),
+    augmented = map(kclust, augment, train_features_scaled %&gt;% select(where(is.numeric)))
+    )
+
+## Visualize results to detemine optimal clusters to use
+train_cluster %&gt;%
+  unnest(cols = c(glanced)) %&gt;%
+  ggplot(aes(k, tot.withinss)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1,9,1)) +
+  labs(title = &quot;Elobow Analysis of Train Route Features&quot;,
+       subtitle = &quot;Suggests 4 is the optimal number of clusters&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<pre class="r"><code>## Add cluster column to train features
+train_features_clusters &lt;- train_features %&gt;%
+  mutate(cluster = train_cluster %&gt;%
+           filter(k == 4) %&gt;%
+           unnest(augmented) %&gt;%
+           pull(.cluster))</code></pre>
+<p><br>
+<br></p>
+<p>If we facet our original time series graph by cluster number we can begin to see the main differences between our groupings. There looks to be a set of new train lines that began operating in 2018 that make up an entie cluster.</p>
+<pre class="r"><code>trains_ts %&gt;%
+  left_join(train_features_clusters) %&gt;%
+  ggplot(aes(x = yearmonth, y = total_num_trips, col = cluster, group = interaction(service, departure_station, arrival_station))) +
+  geom_line() +
+  facet_wrap(~cluster) +
+  labs(title = &quot;Train Route Volumes Clustered&quot;, x = NULL, y = &quot;Total Trips&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Below are those feature differences between clusters quantified. By graphing a smaller sample of routes from each cluster it’s easier to see the main features represented in the data.</p>
+<p>Here are a few of my initial observations:</p>
+<ul>
+<li>Cluster 1 - Most seasonal French train routes. Possibly tied to vacation travel patterns.</li>
+<li>Cluster 2 - Has the highest overall trends. Route volumes tend to steadily increase or decrease over time and with little seasonal pattern.</li>
+<li>Cluster 3 - New train lines that began operating in 2018. Many appear to be international routes.</li>
+<li>Cluster 4 - Flat overall trend with drastic variations indicated by downward spikes. Google searches for some of these spikes coincide with train worker strikes and other service outage events.</li>
+</ul>
+<pre class="r"><code>## Bar chart of cluster differences
+train_cluster %&gt;%
+  filter(k == 4) %&gt;%
+  unnest(cols = c(tidied)) %&gt;%
+  select(-kclust,-glanced, -augmented, -k) %&gt;% 
+  pivot_longer(cols = trend_strength:stat_arch_lm) %&gt;%
+  group_by(cluster) %&gt;%
+  top_n(20, abs(value)) %&gt;%
+  #mutate(name_ro = tidytext::reorder_within(name, value, cluster)) %&gt;%
+  ggplot(aes(x = value, y = name, fill = name)) +
+  geom_col() +
+  #tidytext::scale_y_reordered() +
+  facet_wrap(~cluster, nrow = 1) +
+  guides(fill = FALSE) +
+  labs(x = &quot;Scaled Value&quot;, y = NULL, title = &quot;What Features Define each Cluster?&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>?slice_sample
+
+## Sample routes from each cluster 
+set.seed(1234)
+
+trains_ts %&gt;%
+  inner_join(train_features_clusters %&gt;%
+               group_by(cluster) %&gt;%
+               slice_sample(n = 6)) %&gt;%
+  ggplot(aes(x = yearmonth, y = total_num_trips, col = cluster, group = interaction(service, departure_station, arrival_station))) +
+  geom_line(size = 1) +
+  facet_wrap(~cluster) +
+  labs(title = &quot;Train Route Samples by Cluster &quot;, x = NULL, y = &quot;Total Trips&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
+</div>
+<div id="combining-pca-and-clustering" class="section level3">
+<h3>Combining PCA and Clustering</h3>
+<p>I thought it’d be interesting to compare the PCA and clustering results to see if there are any discrepancies. After combining the results, I created a scatter plot of routes in PC space and colored them by cluster. The results appear very consistent, with the first 2 principal components graph clearly grouping clusters. This also shows that cluster 3 differs most from all others and clusters 4 and 1 appear most alike with overlapping points.</p>
+<pre class="r"><code>### Combines Graph of PC and Clustering
+
+
+features_pcs %&gt;% 
+  broom::augment(train_features) %&gt;%
+  left_join(train_features_clusters %&gt;% select(service, departure_station, arrival_station, cluster)) %&gt;%
+  ggplot(aes(x=.fittedPC1, y=.fittedPC2, col = cluster)) +
+  geom_point(size = 2) + 
+  theme(aspect.ratio=1) +
+  labs(title = &quot; Train Routes in PC Space&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+</div>
+</div>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Above we were able to take a time series data set of 130 French train routes, extract features for each, and perform PCA and clustering analysis to see how route volumes differ most. We saw there were 4 main types of routes based on their monthly total trip patterns with seasonality, overall trend strength, spikiness, and the month a route began operating as the main differentiators.</p>
+</div>
