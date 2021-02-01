@@ -77,10 +77,8 @@
 
 <div id="tidy-tuesday" class="section level2">
 <h2>Tidy Tuesday</h2>
-<p>This is my very first Tidy Tuesday post where I analyze a data set that I have never seen before. The astute may notice this blog date is very much not NOT a Tuesday. Instead, the name comes from the weekly <a href="https://github.com/rfordatascience/tidytuesday">Tidy Tuesday</a> data sets procured by the R For Data Science online community.</p>
-</div>
-<div id="french-train-schedules" class="section level2">
-<h2>French Train Schedules</h2>
+<p>This is my very first Tidy Tuesday post where I analyze a data set that I have never seen before. The astute may notice this blog date is very much not NOT a Tuesday. Instead, the name comes from the weekly <a href="#tidy-tuesday">Tidy Tuesday</a>(<a href="https://github.com/rfordatascience" class="uri">https://github.com/rfordatascience</a>
+## French Train Schedules</p>
 <p>I chose a data set from the past containing <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-02-26">French train line</a> schedules, along with accompanied statistics aggregated at the monthly level. Data can easily be downloaded using the tidytuesdayR package. This data set has a particular field missing for more recent years and requires some data cleaning steps.</p>
 <pre class="r"><code>tt &lt;- tidytuesdayR::tt_load(&#39;2019-02-26&#39;)</code></pre>
 <pre><code>## 
@@ -226,7 +224,6 @@ trains_ts %&gt;%
 <p>Feature extraction lets us expand our exploratory analysis toolkit for time series data. I decided to perform principal component analysis on the train features to better understand the main sources of variation among monthly train volumes.</p>
 <pre class="r"><code># Principal Component Analysis on Time Series Features --------------------
 
-
 features_pcs &lt;- train_features %&gt;%
   select(-service, -departure_station, -arrival_station) %&gt;%
   prcomp(scale = TRUE)
@@ -319,9 +316,7 @@ train_cluster %&gt;%
   guides(fill = FALSE) +
   labs(x = &quot;Scaled Value&quot;, y = NULL, title = &quot;What Features Define each Cluster?&quot;)</code></pre>
 <p><img src="/2021/01/31/tidy-tuesday-french-train-schedule-analysis-with-tidyverts/index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
-<pre class="r"><code>?slice_sample
-
-## Sample routes from each cluster 
+<pre class="r"><code>## Sample routes from each cluster 
 set.seed(1234)
 
 trains_ts %&gt;%

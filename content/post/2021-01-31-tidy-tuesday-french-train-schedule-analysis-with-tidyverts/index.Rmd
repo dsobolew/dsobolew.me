@@ -21,15 +21,11 @@ library(tidytuesdayR)
 theme_set(theme_light())
 
 
-
-
 ```
 
 ## Tidy Tuesday
 
-This is my very first Tidy Tuesday post where I analyze a data set that I have never seen before. The astute may notice this blog date is very much not NOT a Tuesday. Instead, the name comes from the weekly [Tidy Tuesday](https://github.com/rfordatascience/tidytuesday) data sets procured by the R For Data Science online community.
-
-
+This is my very first Tidy Tuesday post where I analyze a data set that I have never seen before. The astute may notice this blog date is very much not NOT a Tuesday. Instead, the name comes from the weekly [Tidy Tuesday](https://github.com/rfordatascience
 ## French Train Schedules
 
 I chose a data set from the past containing [French train line](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-02-26) schedules, along with accompanied statistics aggregated at the monthly level. Data can easily be downloaded using the tidytuesdayR package. This data set has a particular field missing for more recent years and requires some data cleaning steps. 
@@ -199,7 +195,6 @@ Feature extraction lets us expand our exploratory analysis toolkit for time seri
 ```{r}
 # Principal Component Analysis on Time Series Features --------------------
 
-
 features_pcs <- train_features %>%
   select(-service, -departure_station, -arrival_station) %>%
   prcomp(scale = TRUE)
@@ -221,7 +216,6 @@ features_pcs$rotation %>%
   labs(title = "What Features Account for the Top 3 Principal Components?",
         y = NULL)
   
-
 ```
 
 ### Clustering Analysis
@@ -305,9 +299,6 @@ train_cluster %>%
   facet_wrap(~cluster, nrow = 1) +
   guides(fill = FALSE) +
   labs(x = "Scaled Value", y = NULL, title = "What Features Define each Cluster?")
-
-
-?slice_sample
 
 ## Sample routes from each cluster 
 set.seed(1234)
