@@ -94,7 +94,7 @@ trains_ts %>%
 autoplot(total_num_trips) +
   guides(col = FALSE) +
   labs(y = "Trips", x = NULL, title = "Monthly Total Trips by Train Leg",
-       subtitle = "Each line represents a unqieu departure and arrival station combination")
+       subtitle = "Each line represents a unique departure and arrival station combination")
 ```
 
 
@@ -140,8 +140,6 @@ train_features %>%
        subtitle = "Higher values labelled for context")
 ```
 
-
-### Most Positive Trend
 
 Extracting features from the time series lets us easily answer certain questions compared to sifting through hundreds of time series graphs. The below graphs use simple filtering to answer questions I had about the data set. 
 
