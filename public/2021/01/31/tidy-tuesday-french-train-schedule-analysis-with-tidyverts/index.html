@@ -30,6 +30,10 @@
 <link rel="stylesheet" href="/css/fonts.css" media="all">
 <link rel="stylesheet" href="/css/main.css" media="all">
 
+<script async src="https://use.fontawesome.com/32c3d13def.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+  <link rel="stylesheet" href="/css/codefolding.css" />
 
 
   </head>
@@ -134,7 +138,7 @@ trains_ts %&gt;%
 autoplot(total_num_trips) +
   guides(col = FALSE) +
   labs(y = &quot;Trips&quot;, x = NULL, title = &quot;Monthly Total Trips by Train Leg&quot;,
-       subtitle = &quot;Each line represents a unqieu departure and arrival station combination&quot;)</code></pre>
+       subtitle = &quot;Each line represents a unique departure and arrival station combination&quot;)</code></pre>
 <p><img src="/2021/01/31/tidy-tuesday-french-train-schedule-analysis-with-tidyverts/index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 </div>
 <div id="time-series-feature-extraction" class="section level3">
@@ -189,9 +193,6 @@ head(train_features)</code></pre>
        title = &quot;Trend vs Seasonality for All Train Legs&quot;,
        subtitle = &quot;Higher values labelled for context&quot;)</code></pre>
 <p><img src="/2021/01/31/tidy-tuesday-french-train-schedule-analysis-with-tidyverts/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-</div>
-<div id="most-positive-trend" class="section level3">
-<h3>Most Positive Trend</h3>
 <p>Extracting features from the time series lets us easily answer certain questions compared to sifting through hundreds of time series graphs. The below graphs use simple filtering to answer questions I had about the data set.</p>
 <pre class="r"><code>## Most positive trend
 
@@ -368,8 +369,14 @@ features_pcs %&gt;%
           </li>
         </ul>
       </footer>
-
-    </div>
+   </div>
+    
+    
+      <script src="/js/jquery.js"></script>
+      <script src="/js/collapse.js"></script>
+      <script src="/js/dropdown.js"></script>
+      <script src="/js/transition.js"></script>
+    
     
 
 
@@ -389,6 +396,15 @@ features_pcs %&gt;%
 <script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
 
+     
+  <script>
+  $(document).ready(function () {
+    window.initializeCodeFolding("show" === "hide");
+  });
+  </script>
+  <script src="/js/codefolding.js"></script>
+
+© 2021 GitHub, Inc.
     
   </body>
 </html>

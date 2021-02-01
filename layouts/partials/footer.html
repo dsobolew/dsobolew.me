@@ -8,10 +8,17 @@
           </li>
         </ul>
       </footer>
-
-    </div>
+   </div>
+    <!-- Init code folding -->
+    {{ if not .Site.Params.disable_codefolding }}
+      <script src="{{ "js/jquery.js" | relURL }}"></script>
+      <script src="{{ "js/collapse.js" | relURL }}"></script>
+      <script src="{{ "js/dropdown.js" | relURL }}"></script>
+      <script src="{{ "js/transition.js" | relURL }}"></script>
+    {{ end }}
     {{ partial "footer_highlightjs" . }}
     {{ partial "footer_mathjax" . }}
+    {{ partial "article_footer_js.html" . }}
     {{ template "_internal/google_analytics.html" . }}
   </body>
 </html>

@@ -4,6 +4,11 @@ title: A Data Blog
 theme: hugo-lithium
 googleAnalytics: ''
 disqusShortname: ''
+enableEmoji: true
+disable_codefolding: false
+# Set to "hide" or "show" all codes by default
+codefolding_show: show
+codefolding_nobutton: true
 ignoreFiles:
   - \.Rmd$
   - \.Rmarkdown$
