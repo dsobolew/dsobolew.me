@@ -245,7 +245,7 @@ train_cluster %>%
   geom_line() +
   geom_point() +
   scale_x_continuous(breaks = seq(1,9,1)) +
-  labs(title = "Elobow Analysis of Train Route Features",
+  labs(title = "Elbow Analysis of Train Route Feature Clusters",
        subtitle = "Suggests 4 is the optimal number of clusters")
 
 
