@@ -1,8 +1,8 @@
 ---
-title: Superbowl Squares with R
+title: Super Bowl Squares with R
 author: ''
 date: '2021-02-04'
-slug: superbowl-squares-with-r
+slug: super-bowl-squares-with-r
 categories: []
 tags: []
 editor_options: 
@@ -23,13 +23,13 @@ squares <- read_csv(here::here("static","data","superbowl_squares","squares.csv"
 
 ```
 
-## Superbowl Squares COVID Edition
+## Super Bowl Squares COVID Edition
 
 It's that time of year again where we gather to binge on exotic dips and watch some of the most expensive commercials ever created. Also, there's a football game. This year the merriment is likely on hold for many due to COVID, but there is a way to inject some extra excitement into your Sunday. Superbowl Squares is a bingo-esque game where participants fill out their names on a grid. Columns and rows range from 0 to 9 and correspond to the last digit of each team's score. Those who have the correct numbers after each quarter win a prize!
 
 *This blog does not promote gambling and prizes can range from a firm handshake to fresh baked cookies.*
 
-Typically the numbers are randomly generated after names are hand written but randomly ordering the names achieves the same goal. Superbowl Squares is the best kind of game; one that requires zero skill but can still be exciting.
+Traditionally the numbers for columns and rows are randomly generated after names are hand written on a piece of paper, but randomly ordering the names achieves the same goal. Superbowl Squares is the best kind of game; one that requires zero skill but can still be exciting.
 
 <center>
 
@@ -37,7 +37,7 @@ Typically the numbers are randomly generated after names are hand written but ra
 
 </center>
 
-I decided to organize a Superbowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the "squares" column add up to 100 exactly. 
+I decided to organize a Super Bowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the "squares" column add up to 100 exactly. 
 
 
 ```{r}
@@ -49,7 +49,7 @@ squares
 
 ### Building a Board
 
-The Superbowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the ```crossing``` function from the ```tidyr``` package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed. 
+The Super Bowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the ```crossing``` function from the ```tidyr``` package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed. 
 
 ```{r}
 

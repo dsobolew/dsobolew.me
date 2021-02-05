@@ -1,8 +1,8 @@
 ---
-title: Superbowl Squares with R
+title: Super Bowl Squares with R
 author: ''
 date: '2021-02-04'
-slug: superbowl-squares-with-r
+slug: super-bowl-squares-with-r
 categories: []
 tags: []
 editor_options: 
@@ -11,15 +11,15 @@ editor_options:
 
 
 
-<div id="superbowl-squares-covid-edition" class="section level2">
-<h2>Superbowl Squares COVID Edition</h2>
+<div id="super-bowl-squares-covid-edition" class="section level2">
+<h2>Super Bowl Squares COVID Edition</h2>
 <p>It’s that time of year again where we gather to binge on exotic dips and watch some of the most expensive commercials ever created. Also, there’s a football game. This year the merriment is likely on hold for many due to COVID, but there is a way to inject some extra excitement into your Sunday. Superbowl Squares is a bingo-esque game where participants fill out their names on a grid. Columns and rows range from 0 to 9 and correspond to the last digit of each team’s score. Those who have the correct numbers after each quarter win a prize!</p>
 <p><em>This blog does not promote gambling and prizes can range from a firm handshake to fresh baked cookies.</em></p>
-<p>Typically the numbers are randomly generated after names are hand written but randomly ordering the names achieves the same goal. Superbowl Squares is the best kind of game; one that requires zero skill but can still be exciting.</p>
+<p>Traditionally the numbers for columns and rows are randomly generated after names are hand written on a piece of paper, but randomly ordering the names achieves the same goal. Superbowl Squares is the best kind of game; one that requires zero skill but can still be exciting.</p>
 <center>
 <p><img src="https://images.daznservices.com/di/library/sporting_news/8/e4/super-bowl-squares-012815-ftrjpg_192r85vn9rmv61fzavaolc2i8s.jpg?t=846249227&amp;quality=100" width="600" /></p>
 </center>
-<p>I decided to organize a Superbowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the “squares” column add up to 100 exactly.</p>
+<p>I decided to organize a Super Bowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the “squares” column add up to 100 exactly.</p>
 <pre class="r"><code>squares</code></pre>
 <pre><code>## # A tibble: 28 x 2
 ##    participants squares
@@ -37,7 +37,7 @@ editor_options:
 ## # ... with 18 more rows</code></pre>
 <div id="building-a-board" class="section level3">
 <h3>Building a Board</h3>
-<p>The Superbowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the <code>crossing</code> function from the <code>tidyr</code> package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed.</p>
+<p>The Super Bowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the <code>crossing</code> function from the <code>tidyr</code> package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed.</p>
 <pre class="r"><code>set.seed(123)
 
 
