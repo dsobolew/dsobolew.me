@@ -1,0 +1,160 @@
+---
+title: Superbowl Squares with R
+author: ''
+date: '2021-02-04'
+slug: superbowl-squares-with-r
+categories: []
+tags: []
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<div id="superbowl-squares-covid-edition" class="section level2">
+<h2>Superbowl Squares COVID Edition</h2>
+<p>It’s that time of year again where we gather to binge on exotic dips and watch some of the most expensive commercials ever created. Also, there’s a football game. This year the merriment is likely on hold for many due to COVID, but there is a way to inject some extra excitement into your Sunday. Superbowl Squares is a bingo-esque game where participants fill out their names on a grid. Columns and rows range from 0 to 9 and correspond to the last digit of each team’s score. Those who have the correct numbers after each quarter win a prize!</p>
+<p><em>This blog does not promote gambling and prizes can range from a firm handshake to fresh baked cookies.</em></p>
+<p>Typically the numbers are randomly generated after names are hand written but randomly ordering the names achieves the same goal. Superbowl Squares is the best kind of game; one that requires zero skill but can still be exciting.</p>
+<center>
+<p><img src="https://images.daznservices.com/di/library/sporting_news/8/e4/super-bowl-squares-012815-ftrjpg_192r85vn9rmv61fzavaolc2i8s.jpg?t=846249227&amp;quality=100" width="600" /></p>
+</center>
+<p>I decided to organize a Superbowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the “squares” column add up to 100 exactly.</p>
+<pre class="r"><code>squares</code></pre>
+<pre><code>## # A tibble: 28 x 2
+##    participants squares
+##    &lt;chr&gt;          &lt;dbl&gt;
+##  1 Kyle               4
+##  2 Dennis             5
+##  3 Carlos             3
+##  4 Mike               2
+##  5 Parker             5
+##  6 Pete               2
+##  7 Papa               4
+##  8 Alison             2
+##  9 Julie D            4
+## 10 Billy/Gena         4
+## # ... with 18 more rows</code></pre>
+<div id="building-a-board" class="section level3">
+<h3>Building a Board</h3>
+<p>The Superbowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the <code>crossing</code> function from the <code>tidyr</code> package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed.</p>
+<pre class="r"><code>set.seed(123)
+
+
+squares_board &lt;- crossing(AFC = 0:9, NFC = 0:9) %&gt;%
+  mutate(name = sample(squares %&gt;%
+                         ### expand tibble to one row for each claimed square
+                         uncount(squares) %&gt;%
+                         ### Turn participants column into a vector
+                         pull(participants))) 
+
+head(squares_board)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##     AFC   NFC name      
+##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;     
+## 1     0     0 Julie D   
+## 2     0     1 Frutiger  
+## 3     0     2 Soshana   
+## 4     0     3 Mike      
+## 5     0     4 Silver Fox
+## 6     0     5 Dad</code></pre>
+<p>Right now we have the board created in long format. We can use <code>ggplot2</code> and <code>geom_tile</code> from here to construct the final board that will be sent to participants.</p>
+<pre class="r"><code>squares_board %&gt;%
+  ggplot(aes(x = factor(AFC), y = fct_rev(factor(NFC)))) +
+  geom_tile(fill = &quot;White&quot;, col = &quot;black&quot;) +
+  geom_text(aes(label = name)) +
+  scale_x_discrete(position = &quot;top&quot;) +
+  labs(x = &quot;Kansas City&quot;, y = &quot;Tampa Bay&quot;) +
+  theme_light() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face=&quot;bold&quot;)) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="864" /></p>
+</div>
+</div>
+<div id="what-are-the-best-numbers" class="section level2">
+<h2>What are the best numbers?</h2>
+<p>I have a general idea which numbers on the board have the best chance of winning. Since touchdowns count as 6 points plus a 1 point field goal attempt and regular field goals count as 3, multiples of 7 and 3 are likely the best numbers. Instead of guessing I decided to scrape the score of every game ever played from the <a href="https://www.pro-football-reference.com/boxscores/game-scores.htm">Pro Football Reference</a> website and see what the historical results were.</p>
+<pre class="r"><code>## Pull score summary data
+library(rvest)
+
+content &lt;- read_html(&quot;https://www.pro-football-reference.com/boxscores/game-scores.htm&quot;)
+
+tables &lt;- html_table(content)[[1]] %&gt;%
+  janitor::clean_names() %&gt;%
+  mutate(last_year = as.numeric(str_sub(last_game, -4)))
+
+
+nfl_scores &lt;- tables %&gt;%
+  select(pts_w, pts_l, count, last_year) %&gt;%
+  uncount(count) %&gt;%
+  mutate(score1 = pts_w %% 10, ## select only the last digit of each score 
+         score2 = pts_l %% 10,
+         row_id = row_number()) </code></pre>
+<p>This is a great opportunity to utilize the <code>widyr</code> package to calculate pairwise counts of our scores. I decided to filter to all scores that have occurred since 2000 to represent the modern era of NFL football.</p>
+<pre class="r"><code>nfl_scores_count &lt;- nfl_scores %&gt;%
+  filter(last_year &gt;= 2000) %&gt;%
+  pivot_longer(cols = starts_with(&quot;score&quot;)) %&gt;%
+  widyr::pairwise_count(value,row_id,sort = T) %&gt;% 
+  ## Bind rows for same score tallies (this is due to a bug in widyr I believe)
+  bind_rows(nfl_scores %&gt;%
+              filter(last_year &gt;= 2000,
+                     score1 == score2) %&gt;%
+              group_by(score1, score2) %&gt;%
+              tally() %&gt;%
+              ungroup() %&gt;%
+              rename(item1 = score1,
+                     item2 = score2))
+
+head(nfl_scores_count)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   item1 item2     n
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     7     0  1206
+## 2     0     7  1206
+## 3     4     7  1133
+## 4     7     4  1133
+## 5     3     0   971
+## 6     0     3   971</code></pre>
+<p>Now we can easily calculate the percentages for each score combination and create our sqaures table as a heatmap.</p>
+<pre class="r"><code>nfl_scores_count %&gt;%
+  group_by() %&gt;%
+  mutate(pct = (n / sum(n))) %&gt;%
+  ggplot(aes(x = factor(item1), y = fct_rev(factor(item2)))) +
+  geom_tile(aes(fill = n), alpha = .7) +
+  geom_text(aes(label = scales::percent(pct, accuracy = .01)), fontface = &quot;bold&quot;) +
+  scale_x_discrete(position = &quot;top&quot;) +
+  scale_fill_gradientn(colors = fct_rev(RColorBrewer::brewer.pal(9,&quot;RdYlGn&quot;))) +
+  labs(x = &quot;&quot;, y = &quot;&quot;, title = &quot;Superbowl Squares Probability&quot;,
+       subtitle = &quot;Percentages calculated from all recorded NFL scores since 2000&quot;) +
+  guides(fill = FALSE) +
+  theme_light() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face=&quot;bold&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Looking at pairwise counts as a barchart shows a different perspective. I sure hope I get some combination of 0, 3, 4, or 7 and some fresh baked cookies.</p>
+<pre class="r"><code>nfl_scores %&gt;%
+  filter(last_year &gt;= 2000) %&gt;%
+  pivot_longer(cols = starts_with(&quot;score&quot;)) %&gt;%
+  widyr::pairwise_count(value,row_id,sort = T,upper = F) %&gt;% 
+  ## Bind rows for same score tallies (this is due to a bug in widyr I believe)
+  bind_rows(nfl_scores %&gt;%
+              filter(last_year &gt;= 2000,
+                     score1 == score2) %&gt;%
+              group_by(score1, score2) %&gt;%
+              tally() %&gt;%
+              ungroup() %&gt;%
+              rename(item1 = score1,
+                     item2 = score2)) %&gt;%
+  group_by() %&gt;%
+  mutate(pct = (n / sum(n))) %&gt;%
+  mutate(scores = paste0(item1,&quot;-&quot;,item2),
+         scores = fct_rev(fct_reorder(scores, n))) %&gt;%
+  ggplot(aes(x = scores, y = n)) +
+  geom_col() +
+  geom_text(aes(label = scales::percent(pct, accuracy = .1)), angle = 45,hjust = -.3,vjust = .1, size = 3) +
+  ylim(c(0,1280)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = -.01)) +
+  labs(x = &quot;Last Digit Score Combinations&quot;, y = &quot;count&quot;, title = &quot;Last Digit Score Combination Totals Since 2000&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="768" /></p>
+</div>
