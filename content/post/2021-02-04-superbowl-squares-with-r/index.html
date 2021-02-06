@@ -19,7 +19,7 @@ editor_options:
 <center>
 <p><img src="https://images.daznservices.com/di/library/sporting_news/8/e4/super-bowl-squares-012815-ftrjpg_192r85vn9rmv61fzavaolc2i8s.jpg?t=846249227&amp;quality=100" width="600" /></p>
 </center>
-<p>I decided to organize a Super Bowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the “squares” column add up to 100 exactly.</p>
+<p>I decided to organize a Super Bowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the “squares” column adds up to 100 exactly. Squares cost $20 apiece- hypothetically of course.</p>
 <pre class="r"><code>squares</code></pre>
 <pre><code>## # A tibble: 28 x 2
 ##    participants squares
@@ -35,10 +35,11 @@ editor_options:
 ##  9 Julie D            4
 ## 10 Billy/Gena         4
 ## # ... with 18 more rows</code></pre>
-<div id="building-a-board" class="section level3">
-<h3>Building a Board</h3>
+</div>
+<div id="building-a-board" class="section level2">
+<h2>Building a Board</h2>
 <p>The Super Bowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the <code>crossing</code> function from the <code>tidyr</code> package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed.</p>
-<pre class="r"><code>set.seed(123)
+<pre class="r"><code>set.seed(8017)
 
 
 squares_board &lt;- crossing(AFC = 0:9, NFC = 0:9) %&gt;%
@@ -52,24 +53,24 @@ head(squares_board)</code></pre>
 <pre><code>## # A tibble: 6 x 3
 ##     AFC   NFC name      
 ##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;     
-## 1     0     0 Julie D   
-## 2     0     1 Frutiger  
-## 3     0     2 Soshana   
-## 4     0     3 Mike      
-## 5     0     4 Silver Fox
-## 6     0     5 Dad</code></pre>
+## 1     0     0 Kristen   
+## 2     0     1 Billy/Gena
+## 3     0     2 Jamie     
+## 4     0     3 Anthony   
+## 5     0     4 Pete      
+## 6     0     5 Ben</code></pre>
 <p>Right now we have the board created in long format. We can use <code>ggplot2</code> and <code>geom_tile</code> from here to construct the final board that will be sent to participants.</p>
 <pre class="r"><code>squares_board %&gt;%
   ggplot(aes(x = factor(AFC), y = fct_rev(factor(NFC)))) +
-  geom_tile(fill = &quot;White&quot;, col = &quot;black&quot;) +
+  geom_tile(aes(fill = name), col = &quot;black&quot;, alpha = .6) +
   geom_text(aes(label = name)) +
   scale_x_discrete(position = &quot;top&quot;) +
   labs(x = &quot;Kansas City&quot;, y = &quot;Tampa Bay&quot;) +
   theme_light() +
   theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14,face=&quot;bold&quot;)) </code></pre>
+        axis.title=element_text(size=14,face=&quot;bold&quot;)) +
+  guides(fill = FALSE)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="864" /></p>
-</div>
 </div>
 <div id="what-are-the-best-numbers" class="section level2">
 <h2>What are the best numbers?</h2>
@@ -103,35 +104,37 @@ nfl_scores &lt;- tables %&gt;%
               tally() %&gt;%
               ungroup() %&gt;%
               rename(item1 = score1,
-                     item2 = score2))
+                     item2 = score2)) %&gt;%
+  group_by() %&gt;%
+  mutate(pct = (n / sum(n))) %&gt;%
+  ungroup()
 
 head(nfl_scores_count)</code></pre>
-<pre><code>## # A tibble: 6 x 3
-##   item1 item2     n
-##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-## 1     7     0  1206
-## 2     0     7  1206
-## 3     4     7  1133
-## 4     7     4  1133
-## 5     3     0   971
-## 6     0     3   971</code></pre>
-<p>Now we can easily calculate the percentages for each score combination and create our sqaures table as a heatmap.</p>
+<pre><code>## # A tibble: 6 x 4
+##   item1 item2     n    pct
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+## 1     7     0  1206 0.0395
+## 2     0     7  1206 0.0395
+## 3     4     7  1133 0.0371
+## 4     7     4  1133 0.0371
+## 5     3     0   971 0.0318
+## 6     0     3   971 0.0318</code></pre>
+<p>Now we can easily calculate the percentages for each score combination and create our squares table as a heat map.</p>
 <pre class="r"><code>nfl_scores_count %&gt;%
-  group_by() %&gt;%
   mutate(pct = (n / sum(n))) %&gt;%
   ggplot(aes(x = factor(item1), y = fct_rev(factor(item2)))) +
   geom_tile(aes(fill = n), alpha = .7) +
   geom_text(aes(label = scales::percent(pct, accuracy = .01)), fontface = &quot;bold&quot;) +
   scale_x_discrete(position = &quot;top&quot;) +
   scale_fill_gradientn(colors = fct_rev(RColorBrewer::brewer.pal(9,&quot;RdYlGn&quot;))) +
-  labs(x = &quot;&quot;, y = &quot;&quot;, title = &quot;Superbowl Squares Probability&quot;,
+  labs(x = &quot;&quot;, y = &quot;&quot;, title = &quot;Super Bowl Squares Probability&quot;,
        subtitle = &quot;Percentages calculated from all recorded NFL scores since 2000&quot;) +
   guides(fill = FALSE) +
   theme_light() +
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face=&quot;bold&quot;))</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
-<p>Looking at pairwise counts as a barchart shows a different perspective. I sure hope I get some combination of 0, 3, 4, or 7 and some fresh baked cookies.</p>
+<p>Looking at pairwise counts as a barchart shows a different perspective. Almost any combination of 0, 3, 4, or 7 is money in the bank or cookies in the basket.</p>
 <pre class="r"><code>nfl_scores %&gt;%
   filter(last_year &gt;= 2000) %&gt;%
   pivot_longer(cols = starts_with(&quot;score&quot;)) %&gt;%
@@ -157,4 +160,56 @@ head(nfl_scores_count)</code></pre>
   theme(axis.text.x = element_text(angle = 90, vjust = -.01)) +
   labs(x = &quot;Last Digit Score Combinations&quot;, y = &quot;count&quot;, title = &quot;Last Digit Score Combination Totals Since 2000&quot;)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="768" /></p>
+</div>
+<div id="super-bowl-squares-power-rankings" class="section level2">
+<h2>Super Bowl Squares Power Rankings</h2>
+<p>Now for what we all really care about, how likely am I to win? I combined the elongated board and NFL score probability tibbles created earlier to find out.</p>
+<pre class="r"><code>participant_probabilites &lt;- squares_board %&gt;%
+  left_join(nfl_scores_count, by = c(&quot;AFC&quot; = &quot;item1&quot;,&quot;NFC&quot; = &quot;item2&quot;)) %&gt;%
+  mutate(dollars = 10,
+         expected_return = dollars * pct)
+
+
+participant_probabilites %&gt;%
+  group_by(name) %&gt;%
+  summarise(prob = sum(pct),
+            money_spent = sum(dollars)) %&gt;%
+  mutate(name = fct_reorder(name, prob)) %&gt;%
+  ggplot(aes(x = prob, y = name, col = if_else(name == &quot;Dennis&quot;,&quot;Y&quot;,&quot;N&quot;))) +
+  geom_point(aes(size = money_spent)) +
+  geom_segment(aes(xend = prob, x = 0, yend = name, y = name)) +
+  theme_minimal() +
+  scale_size_continuous(labels = scales::dollar_format()) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  labs(size = &quot;Money Spent&quot;, y = NULL, title = &quot;Super Bowl Squares Power Rankings&quot;,
+       x = &quot;% Change of Winning Final Prize&quot;, subtitle =  &quot;Your&#39;s truly highlighted&quot;) +
+  guides(col = FALSE)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>BETTER THAN MOST!</p>
+<center>
+<p><img src="https://media3.giphy.com/media/uTuLngvL9p0Xe/giphy.gif?cid=ecf05e47bl962dcgghdz4kpnq29pakyv3edkal6nedt5w4gf&amp;rid=giphy.gif" /></p>
+</center>
+<p>Some observations: RIP Amanda and Alannna and Pete looks like he has decent chances to win based on the amount of money he paid. This made me curios so I divided the chance of winning by the amount paid to see who got the most bang for their buck.</p>
+<pre class="r"><code>participant_probabilites %&gt;%
+  group_by(name) %&gt;%
+  summarise(prob = sum(pct),
+            money_spent = sum(dollars),
+            dollar_per_percent = sum(pct)/sum(dollars)) %&gt;%
+  mutate(name = fct_reorder(name, dollar_per_percent)) %&gt;%
+  ggplot(aes(x = dollar_per_percent, y = name, col = if_else(name == &quot;Dennis&quot;,&quot;Y&quot;,&quot;N&quot;))) +
+  geom_point(aes(size = money_spent)) +
+  geom_segment(aes(xend = dollar_per_percent, x = 0, yend = name, y = name)) +
+  theme_minimal() +
+  scale_size_continuous(labels = scales::dollar_format()) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  theme_minimal() +
+  labs(size = &quot;Money Spent&quot;, y = NULL, title = &quot;Super Bowl Squares Power Rankings&quot;,
+       x = &quot;% Gain Per Dollar Spent&quot;, subtitle =  &quot;Your&#39;s truly highlighted&quot;) +
+  guides(col = FALSE)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Aaaand I look considerably worse from an efficiency standpoint.</p>
+<center>
+<img src="https://thumbs.gfycat.com/WideForthrightEyra-small.gif" />
+</center>
+<p>Anthony is clearly the top ranked player in terms of overall chances to win and efficiency of dollars spent. Per usual, I am rooting for chaos to ensue. Give us a safety and bring down the 0, 3, 4, and 7 holders in their ivory towers!</p>
 </div>

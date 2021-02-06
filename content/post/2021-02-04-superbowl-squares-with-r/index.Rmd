@@ -37,7 +37,7 @@ Traditionally the numbers for columns and rows are randomly generated after name
 
 </center>
 
-I decided to organize a Super Bowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the "squares" column add up to 100 exactly. 
+I decided to organize a Super Bowl Squares raffle and create my random board in R! I have a simple spreadsheet with all of the participants and the number of squares they have claimed. All squares were claimed meaning the "squares" column adds up to 100 exactly. Squares cost $20 apiece- hypothetically of course. 
 
 
 ```{r}
@@ -47,13 +47,13 @@ squares
 ```
 
 
-### Building a Board
+## Building a Board
 
 The Super Bowl Squares board is simply a matrix with every combination of 0 through 9 available. I used the ```crossing``` function from the ```tidyr``` package to create a 2 column tibble with every combination of 0 - 9 possible. Each row in this tibble represents one of the 100 squares on our final board. After that all we need to do is add an additional column with a list of randomly ordered participant names. On game day I am planning a table generation ceremony where numbers are drawn out of a hat to determine the random seed. 
 
 ```{r}
 
-set.seed(123)
+set.seed(8017)
 
 
 squares_board <- crossing(AFC = 0:9, NFC = 0:9) %>%
@@ -74,13 +74,14 @@ Right now we have the board created in long format. We can use ```ggplot2``` and
 
 squares_board %>%
   ggplot(aes(x = factor(AFC), y = fct_rev(factor(NFC)))) +
-  geom_tile(fill = "White", col = "black") +
+  geom_tile(aes(fill = name), col = "black", alpha = .6) +
   geom_text(aes(label = name)) +
   scale_x_discrete(position = "top") +
   labs(x = "Kansas City", y = "Tampa Bay") +
   theme_light() +
   theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14,face="bold")) 
+        axis.title=element_text(size=14,face="bold")) +
+  guides(fill = FALSE)
 
 ```
 
@@ -125,25 +126,27 @@ nfl_scores_count <- nfl_scores %>%
               tally() %>%
               ungroup() %>%
               rename(item1 = score1,
-                     item2 = score2))
+                     item2 = score2)) %>%
+  group_by() %>%
+  mutate(pct = (n / sum(n))) %>%
+  ungroup()
 
 head(nfl_scores_count)
 
 ```
 
-Now we can easily calculate the percentages for each score combination and create our sqaures table as a heatmap. 
+Now we can easily calculate the percentages for each score combination and create our squares table as a heat map. 
 
 ```{r}
 
 nfl_scores_count %>%
-  group_by() %>%
   mutate(pct = (n / sum(n))) %>%
   ggplot(aes(x = factor(item1), y = fct_rev(factor(item2)))) +
   geom_tile(aes(fill = n), alpha = .7) +
   geom_text(aes(label = scales::percent(pct, accuracy = .01)), fontface = "bold") +
   scale_x_discrete(position = "top") +
   scale_fill_gradientn(colors = fct_rev(RColorBrewer::brewer.pal(9,"RdYlGn"))) +
-  labs(x = "", y = "", title = "Superbowl Squares Probability",
+  labs(x = "", y = "", title = "Super Bowl Squares Probability",
        subtitle = "Percentages calculated from all recorded NFL scores since 2000") +
   guides(fill = FALSE) +
   theme_light() +
@@ -152,7 +155,7 @@ nfl_scores_count %>%
 
 ```
 
-Looking at pairwise counts as a barchart shows a different perspective. I sure hope I get some combination of 0, 3, 4, or 7 and some fresh baked cookies. 
+Looking at pairwise counts as a barchart shows a different perspective. Almost any combination of 0, 3, 4, or 7 is money in the bank or cookies in the basket. 
 
 ```{r fig.width=8, fig.height=6}
 
@@ -182,5 +185,76 @@ nfl_scores %>%
   labs(x = "Last Digit Score Combinations", y = "count", title = "Last Digit Score Combination Totals Since 2000")
 
 ```
+
+## Super Bowl Squares Power Rankings 
+
+Now for what we all really care about, how likely am I to win? I combined the elongated board and NFL score probability tibbles created earlier to find out. 
+
+```{r fig.height=6}
+
+participant_probabilites <- squares_board %>%
+  left_join(nfl_scores_count, by = c("AFC" = "item1","NFC" = "item2")) %>%
+  mutate(dollars = 10,
+         expected_return = dollars * pct)
+
+
+participant_probabilites %>%
+  group_by(name) %>%
+  summarise(prob = sum(pct),
+            money_spent = sum(dollars)) %>%
+  mutate(name = fct_reorder(name, prob)) %>%
+  ggplot(aes(x = prob, y = name, col = if_else(name == "Dennis","Y","N"))) +
+  geom_point(aes(size = money_spent)) +
+  geom_segment(aes(xend = prob, x = 0, yend = name, y = name)) +
+  theme_minimal() +
+  scale_size_continuous(labels = scales::dollar_format()) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  labs(size = "Money Spent", y = NULL, title = "Super Bowl Squares Power Rankings",
+       x = "% Change of Winning Final Prize", subtitle =  "Your's truly highlighted") +
+  guides(col = FALSE)
+
+
+
+```
+
+BETTER THAN MOST!
+
+<center>
+
+![](https://media3.giphy.com/media/uTuLngvL9p0Xe/giphy.gif?cid=ecf05e47bl962dcgghdz4kpnq29pakyv3edkal6nedt5w4gf&rid=giphy.gif)
+
+</center>
+
+Some observations: RIP Amanda and Alannna and Pete looks like he has decent chances to win based on the amount of money he paid. This made me curios so I divided the chance of winning by the amount paid to see who got the most bang for their buck.
+
+
+```{r fig.height=6}
+participant_probabilites %>%
+  group_by(name) %>%
+  summarise(prob = sum(pct),
+            money_spent = sum(dollars),
+            dollar_per_percent = sum(pct)/sum(dollars)) %>%
+  mutate(name = fct_reorder(name, dollar_per_percent)) %>%
+  ggplot(aes(x = dollar_per_percent, y = name, col = if_else(name == "Dennis","Y","N"))) +
+  geom_point(aes(size = money_spent)) +
+  geom_segment(aes(xend = dollar_per_percent, x = 0, yend = name, y = name)) +
+  theme_minimal() +
+  scale_size_continuous(labels = scales::dollar_format()) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  theme_minimal() +
+  labs(size = "Money Spent", y = NULL, title = "Super Bowl Squares Power Rankings",
+       x = "% Gain Per Dollar Spent", subtitle =  "Your's truly highlighted") +
+  guides(col = FALSE)
+
+```
+
+Aaaand I look considerably worse from an efficiency standpoint.
+
+<center>
+
+![](https://thumbs.gfycat.com/WideForthrightEyra-small.gif)
+</center>
+
+Anthony is clearly the top ranked player in terms of overall chances to win and efficiency of dollars spent. Per usual, I am rooting for chaos to ensue. Give us a safety and bring down the 0, 3, 4, and 7 holders in their ivory towers!
 
 
