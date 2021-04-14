@@ -305,9 +305,9 @@ Based on this graph, would you say there is significant COVID outbreak clusters 
 
 ### Global Moran's I
 
-We will use the [`spdep`](https://github.com/r-spatial/spdep) package in R to help perform the Moran's I test. I prefer working with `sf` objects in R, which is a newer way to store spatial data-structures that adheres to tidy principals, but in order or take advantage of the robust spatial tests available in `spdep` we must use `sp` objects instead. To perform these tests I will convert my `sf` objects to `sp`, then tidy the results on the back end using the `broom` package. 
+We will use the `spdep` package in R to help perform the Moran’s I test. I prefer working with sf objects in R, which is a newer way to store spatial data-structures that adheres to tidy principals. To take advantage of the robust spatial tests available in `spdep`, we must use sp objects rather than sf objects. I will convert my sf objects to sp to perform the tests, then tidy the results on the back end using the `broom` package.
 
-In order to calculate Moran's I the spdep function needs to know which zipcodes are close to or far away from each other. Feeding an `sp` object to the `poly2nb()` function will build a neighbors list based on regions sharing the same boundary. Below visually shows the relationships this function is producing.
+To calculate Moran’s I the spdep function needs to know zip codes' distances from one another. Feeding an sp object to the `poly2nb()` function will build a neighbors list based on regions sharing the same boundary. Below visually shows the relationships this function is producing.
 
 ```{r phila_queen, include=TRUE, echo = TRUE}
 library(spdep)
@@ -321,7 +321,7 @@ plot(phila_sp)
 plot(phila_nb, coords = coords, add = T, col = "#F78764")
 ```
 
-We are now ready to perform the Moran's I test for spatial autocorrelation. I utilize the `EBImoran.mc()` function since we are working about COVID rates based on the population of a specific zipcode. This function also automatically performs Monte Carlo simulations for us to compare our observed test statistic against. We are required to add the number of COVID cases and population for a zipcode, as well ad a listw object which a weighted list representing the neighborhood relationships we calculated earlier. 
+We are now ready to perform the Moran’s I test for spatial autocorrelation. I used the `EBImoran.mc()` function since we are working with COVID rates based on the population of a specific zip code. This function also automatically performs Monte Carlo simulations for us to compare our observed test statistic against. We must add the number of COVID cases and population for the zip code, as well as a list of weighted objects representing the neighborhood relationships we calculated earlier.
 
 ```{r phila_mgl, include=TRUE, echo = TRUE}
 ## EBI Morans I
